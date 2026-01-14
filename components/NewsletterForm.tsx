@@ -1,6 +1,4 @@
-
 import React, { useState } from 'react';
-import { saveNewsletterSubscription } from '../lib/supabaseClient';
 import { NewsletterSubscription } from '../types';
 
 interface NewsletterFormProps {
@@ -9,40 +7,33 @@ interface NewsletterFormProps {
 }
 
 const NewsletterForm: React.FC<NewsletterFormProps> = ({ variant = 'full', theme = 'dark' }) => {
-  const [formData, setFormData] = useState<NewsletterSubscription>({ 
-    firstName: '', 
-    lastName: '', 
+  const [formData, setFormData] = useState<NewsletterSubscription>({
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     jobTitle: '',
     company: ''
   });
-  
+
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
-    
-    try {
-      const result = await saveNewsletterSubscription(formData);
-      if (result.success) {
-        setStatus('success');
-        setMessage(result.message);
-        setFormData({ firstName: '', lastName: '', email: '', phone: '', jobTitle: '', company: '' });
-      } else {
-        throw new Error('Falha na sincronização');
-      }
-    } catch (err) {
-      setStatus('error');
-      setMessage('Falha na Transmissão: Verifique sua conexão e tente novamente.');
-    }
+
+    // Mock submission - Simulate network delay
+    setTimeout(() => {
+      setStatus('success');
+      setMessage('Cadastro realizado com sucesso! (Modo Demonstração)');
+      setFormData({ firstName: '', lastName: '', email: '', phone: '', jobTitle: '', company: '' });
+    }, 1500);
   };
 
   const isDark = theme === 'dark';
 
-  const inputBaseClasses = variant === 'slim' 
+  const inputBaseClasses = variant === 'slim'
     ? "w-full border rounded-lg px-4 py-3 transition-all text-xs"
     : "w-full border rounded-xl px-6 py-4 transition-all font-medium text-sm";
 
@@ -66,52 +57,52 @@ const NewsletterForm: React.FC<NewsletterFormProps> = ({ variant = 'full', theme
       {variant === 'slim' ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input 
+            <input
               required
-              type="text" 
+              type="text"
               placeholder="Nome Completo"
               className={inputClasses}
               value={`${formData.firstName} ${formData.lastName}`.trim()}
               onChange={(e) => {
                 const parts = e.target.value.split(' ');
-                setFormData({...formData, firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || ''});
+                setFormData({ ...formData, firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' });
               }}
             />
-            <input 
+            <input
               required
-              type="email" 
+              type="email"
               placeholder="E-mail Corporativo"
               className={inputClasses}
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
-            <input 
+            <input
               required
-              type="tel" 
+              type="tel"
               placeholder="WhatsApp"
               className={inputClasses}
               value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input 
+            <input
               required
-              type="text" 
+              type="text"
               placeholder="Cargo"
               className={inputClasses}
               value={formData.jobTitle}
-              onChange={(e) => setFormData({...formData, jobTitle: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
             />
-            <input 
+            <input
               required
-              type="text" 
+              type="text"
               placeholder="Empresa"
               className={inputClasses}
               value={formData.company}
-              onChange={(e) => setFormData({...formData, company: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
             />
-            <button 
+            <button
               type="submit"
               disabled={status === 'loading'}
               className="bg-accent text-white font-black uppercase tracking-[0.2em] py-3 rounded-lg text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-accent/10"
@@ -123,23 +114,23 @@ const NewsletterForm: React.FC<NewsletterFormProps> = ({ variant = 'full', theme
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input required type="text" placeholder="Nome" className={inputClasses} value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} />
-            <input required type="text" placeholder="Sobrenome" className={inputClasses} value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} />
+            <input required type="text" placeholder="Nome" className={inputClasses} value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
+            <input required type="text" placeholder="Sobrenome" className={inputClasses} value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input required type="email" placeholder="E-mail" className={inputClasses} value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-            <input required type="tel" placeholder="Telefone" className={inputClasses} value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+            <input required type="email" placeholder="E-mail" className={inputClasses} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+            <input required type="tel" placeholder="Telefone" className={inputClasses} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input required type="text" placeholder="Cargo" className={inputClasses} value={formData.jobTitle} onChange={(e) => setFormData({...formData, jobTitle: e.target.value})} />
-            <input required type="text" placeholder="Empresa" className={inputClasses} value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
+            <input required type="text" placeholder="Cargo" className={inputClasses} value={formData.jobTitle} onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} />
+            <input required type="text" placeholder="Empresa" className={inputClasses} value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} />
           </div>
           <button type="submit" disabled={status === 'loading'} className="w-full bg-accent text-white font-black uppercase tracking-[0.4em] py-5 rounded-xl text-[11px] hover:scale-[1.02] active:scale-95 transition-all focus:ring-4 focus:ring-accent/20 shadow-xl shadow-accent/10">
             {status === 'loading' ? 'Sincronizando...' : 'Solicitar Acesso Premium'}
           </button>
         </>
       )}
-      
+
       {status === 'error' && (
         <div className={`mt-4 p-4 rounded-xl border animate-in fade-in slide-in-from-top-2 duration-300 ${isDark ? 'bg-accent/10 border-accent/20' : 'bg-accent/5 border-accent/10'}`}>
           <p className="text-[#e61e5a] text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-center leading-relaxed">
