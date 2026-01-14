@@ -1,115 +1,115 @@
 import { NewsItem, Editorial, Video, Columnist } from '../types';
+import { supabase } from './supabase';
 
-// Mock data generator for simulating n8n MCP output
+// Helper to map DB columns to NewsItem type
+const mapNewsItem = (item: any): NewsItem => ({
+  id: item.id,
+  title: item.title,
+  excerpt: item.excerpt,
+  content: item.content,
+  category: item.category,
+  source: item.source,
+  imageUrl: item.image_url, // map image_url to imageUrl
+  timestamp: new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' }),
+  keyPoints: item.key_points || []
+});
+
 export const fetchLatestNews = async (category?: string): Promise<NewsItem[]> => {
-  const news: NewsItem[] = [
-    {
-      id: '1',
-      title: 'O impacto da IA generativa na liderança estratégica de 2024',
-      excerpt: 'Descubra como os novos modelos de linguagem estão moldando a tomada de decisão em empresas Fortune 500.',
-      category: 'Tecnologia',
-      source: 'LinkedIn',
-      timestamp: 'Atualizado há 2 horas',
-      imageUrl: 'https://picsum.photos/seed/tech1/800/450',
-      keyPoints: [
-        'Redução de 30% no tempo de análise de dados primários.',
-        'Surgimento do cargo de Chief AI Orchestrator.',
-        'Risco de viés cognitivo em decisões automatizadas sem supervisão.'
-      ]
-    },
-    {
-      id: '2',
-      title: 'Por que o Venture Capital está voltando os olhos para a sustentabilidade',
-      excerpt: 'Investimentos em ESG batem recorde no primeiro trimestre, sinalizando mudança de paradigma no mercado.',
-      category: 'Negócios',
-      source: 'Web',
-      timestamp: 'Atualizado há 5 horas',
-      imageUrl: 'https://picsum.photos/seed/biz1/800/450',
-      keyPoints: [
-        'Aporte de $12B em tecnologias de captura de carbono no Q1.',
-        'Novas regulamentações da UE forçam transparência total na cadeia.',
-        'Valuation de empresas "carbon-neutral" 15% acima da média do setor.'
-      ]
-    },
-    {
-      id: '3',
-      title: 'As 5 startups que prometem revolucionar o setor de logística no Brasil',
-      excerpt: 'Inovação em last-mile e drones de entrega são os pilares das rodadas de investimento recentes.',
-      category: 'Startups',
-      source: 'Reddit',
-      timestamp: 'Atualizado há 8 horas',
-      imageUrl: 'https://picsum.photos/seed/startup1/800/450',
-      keyPoints: [
-        'Expansão de centros de distribuição hiper-locais.',
-        'Uso de algoritmos de roteirização dinâmica em tempo real.',
-        'Integração nativa com meios de pagamento instantâneos (Pix).'
-      ]
-    },
-    {
-      id: '4',
-      title: 'Reskilling: A necessidade de novos talentos na era da automação',
-      excerpt: 'Especialistas discutem como preparar a força de trabalho para colaborar com sistemas autônomos.',
-      category: 'Carreira',
-      source: 'YouTube',
-      timestamp: 'Atualizado há 12 horas',
-      imageUrl: 'https://picsum.photos/seed/career1/800/450',
-      keyPoints: [
-        'Déficit de 1 milhão de profissionais qualificados em IA no país.',
-        'Importância crescente das soft-skills (empatia e negociação).',
-        'Modelos de educação continuada dentro do ambiente corporativo.'
-      ]
-    }
-  ];
-  
+  let query = supabase
+    .from('news_items')
+    .select('*')
+    .order('created_at', { ascending: false });
+
   if (category && category !== 'Todas') {
-    return news.filter(item => item.category === category);
+    query = query.eq('category', category);
   }
-  return news;
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching news:', error);
+    return [];
+  }
+
+  return (data || []).map(mapNewsItem);
 };
 
 export const fetchNewsByIds = async (ids: string[]): Promise<NewsItem[]> => {
-  const allNews = await fetchLatestNews();
-  return allNews.filter(item => ids.includes(item.id));
+  if (!ids.length) return [];
+
+  const { data, error } = await supabase
+    .from('news_items')
+    .select('*')
+    .in('id', ids);
+
+  if (error) {
+    console.error('Error fetching news by IDs:', error);
+    return [];
+  }
+
+  return (data || []).map(mapNewsItem);
 };
 
 export const fetchEditorials = async (): Promise<Editorial[]> => {
-  return [
-    { 
-      id: '1', 
-      monthYear: 'Janeiro 2024', 
-      theme: 'Liderança Consciente', 
-      imageUrl: 'https://picsum.photos/seed/ed1/400/600',
-      summary: 'Dossiê sobre o impacto humano na automação de processos.'
-    },
-    { 
-      id: '2', 
-      monthYear: 'Fevereiro 2024', 
-      theme: 'Fronteiras da IA', 
-      imageUrl: 'https://picsum.photos/seed/ed2/400/600',
-      summary: 'Análise técnica dos novos modelos de linguagem multimodal.'
-    },
-    { 
-      id: '3', 
-      monthYear: 'Março 2024', 
-      theme: 'Capitalismo de Stakeholders', 
-      imageUrl: 'https://picsum.photos/seed/ed3/400/600',
-      summary: 'A nova métrica de sucesso: impacto social e governança ESG.'
-    }
-  ];
+  const { data, error } = await supabase
+    .from('newsletter_editions')
+    .select('*')
+    .order('publication_date', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching editorials:', error);
+    return [];
+  }
+
+  return (data || []).map((item: any) => ({
+    id: item.id,
+    monthYear: new Date(item.publication_date).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+    theme: item.title,
+    imageUrl: item.cover_image_url,
+    summary: item.synthesis
+  }));
 };
 
 export const fetchVideos = async (): Promise<Video[]> => {
-  return [
-    { id: '1', title: 'Entrevista: O futuro da Fintech com Gabriel Rocha', duration: '15:20', platform: 'YouTube', imageUrl: 'https://picsum.photos/seed/v1/400/225', category: 'Entrevistas' },
-    { id: '2', title: 'Como escalar uma startup em 2024', duration: '08:45', platform: 'YouTube', imageUrl: 'https://picsum.photos/seed/v2/400/225', category: 'Análises' },
-    { id: '3', title: 'Trends Report: O que esperar do Q3', duration: '12:10', platform: 'YouTube', imageUrl: 'https://picsum.photos/seed/v3/400/225', category: 'Clipes curtos' }
-  ];
+  const { data, error } = await supabase
+    .from('videos')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching videos:', error);
+    return [];
+  }
+
+  return (data || []).map((item: any) => ({
+    id: item.id,
+    title: item.title,
+    duration: item.duration,
+    platform: item.platform,
+    imageUrl: item.thumbnail_url,
+    category: item.category,
+    // video_id_or_url needed? Type Video doesn't have it, but maybe needed for detail? 
+    // Checking types.ts: Video interface has: id, title, duration, platform, imageUrl, category.
+    // So we adhere to the interface.
+  }));
 };
 
 export const fetchColumns = async (): Promise<Columnist[]> => {
-  return [
-    { id: '1', name: 'Ana Silva', role: 'CEO', company: 'Nexus Tech', avatarUrl: 'https://i.pravatar.cc/150?u=ana', bio: 'Especialista em transformation digital e cultura ágil.' },
-    // Fix: Added missing quotes to string properties in the Columnist object
-    { id: '2', name: 'Marco Aurélio', role: 'Investor', company: 'Vision VC', avatarUrl: 'https://i.pravatar.cc/150?u=marco', bio: 'Focado em SaaS e infraestrutura crítica para startups.' }
-  ];
+  const { data, error } = await supabase
+    .from('columnists')
+    .select('*');
+
+  if (error) {
+    console.error('Error fetching columnists:', error);
+    return [];
+  }
+
+  return (data || []).map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    role: item.role,
+    company: item.company,
+    avatarUrl: item.avatar_url,
+    bio: item.bio
+  }));
 };
